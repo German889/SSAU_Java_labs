@@ -2,90 +2,114 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 package com.giver.lab1;
 
-public class Car {
-    int modelsCount = 0;
+import com.giver.lab1.exceptions.ModelPriceOutOfBoundsException;
+import com.giver.lab1.exceptions.NoSuchModelNameException;
+
+import java.util.Arrays;
+import java.util.Objects;
+
+public class Car implements Vehicle {
     public Car(){}
-    public Car(String brand, int modelsCount){
+    /*
+    Конструктор класса должен принимать в качестве параметров значение Марки автомобиля и размер массива Моделей
+    */
+    public Car(String brand, int modelCount){
         this.brand = brand;
-        this.modelsCount = modelsCount;
+        models = new CarModel[modelCount];
     }
-    GiverArrayList<Model> models = new GiverArrayList<>(modelsCount);
-    private String brand;
-    public String getBrand() {
-        return brand;
+    private CarModel[] models;
+    private String brand; //поле типа String, хранящее марку автомобиля
+
+    //внутренний класс Модель, имеющий поля название модели и её цену, а также конструктор
+    private class CarModel extends Model{
+        public CarModel(){}
+        public CarModel(String modelName, double price){
+            this.modelName = modelName; this.price = price;
+        }
+        private String modelName;
+        private double price;
+        @Override
+        public void setModelName(String name) {this.modelName = name;}
+        @Override
+        public String getModelName() {return this.modelName;}
+        @Override
+        public void setPrice(double price) {this.price = price;}
+        @Override
+        public double getPrice() {return this.price;}
+
+    }
+    @Override
+    public String getBrand() {return this.brand;}
+    @Override
+    public void setBrand(String name) {this.brand = name;}
+
+    @Override
+    public void changeModelName(String oldName, String newName) throws NoSuchModelNameException {
+        boolean notFound = true;
+        for (CarModel model : models) {
+            if (model.getModelName().equals(oldName)) {
+                model.setModelName(newName);
+                notFound = false;
+            }
+        }
+        if(notFound) throw new NoSuchModelNameException("Невозможно изменить название модели");
     }
 
-    public void setBrand(String brand) {
-        this.brand = brand;
+    @Override
+    public String[] getAllModelNames() { // Используем StreamAPI
+        return Arrays.stream(models)
+                .filter(Objects::nonNull) // Фильтруем только непустые элементы
+                .map(CarModel::getModelName)//Преобразуем каждый элемент потока (объект CarModel) в его имя (строку) с помощью метода getModelName()
+                .toArray(String[]::new); //Преобразуем поток обратно в массив строк.
     }
-    public void createModel(String modelName, int price){
-        Model model = new Model(modelName, price);
-        models.add(model);
+
+    @Override
+    public double getModelPriceByName(String name) throws NoSuchModelNameException {
+        for (CarModel model : models){
+            if(model.getModelName().equals(name)) return model.getPrice();
+        }
+        throw new NoSuchModelNameException("Невозможно получить цену по названию");
     }
-    public void deleteModel(String modelName){
-        final int len = models.size();
-        for(int i=0; i<len; i++){
-            if(models.get(i).getModelName().equals(modelName)){
-                models.remove(i);
+
+    @Override
+    public void setModelPriceByName(String name, double price) throws
+            NoSuchModelNameException, ModelPriceOutOfBoundsException {
+        if(price > Double.MAX_VALUE - 1000) throw new ModelPriceOutOfBoundsException("Чё так дорого????");
+        boolean isFound = false;
+        for(CarModel model : models)
+            if(model.getModelName().equals(name)) {
+                model.setPrice(price);
+                isFound = true;
             }
-        }
+
+        if (!isFound) throw new NoSuchModelNameException("Невозможно установить цену, такого названия нет");
     }
-    public int getModelsCount(){
-        return models.size();
+
+    @Override
+    public double[] getAllPrices() {
+        return Arrays.stream(models)
+                .filter(Objects::nonNull)
+                .mapToDouble(CarModel::getPrice)
+                .toArray();  // Преобразуем поток double в массив double[]
     }
-    class Model{
-        private String modelName;
-        private int price;
-        public Model(String modelName, int price) {
-            this.modelName = modelName;
-            this.price = price;
-        }
-        public void setModelName(String modelName) {
-            this.modelName = modelName;
-        }
-        public String getModelName(){
-            return this.modelName;
-        }
-        public int getPrice(){
-            return this.price;
-        }
-        public void setPrice(int price){
-            this.price = price;
-        }
+
+
+    @Override
+    public void addModel(String name, double price) throws ModelPriceOutOfBoundsException {
+        if(price > Double.MAX_VALUE - 1000) throw new ModelPriceOutOfBoundsException("Чё так дорого????");
+        CarModel[] models2 = Arrays.copyOf(models, models.length+1);
+        CarModel nextModel = new CarModel(name, price);
+        models2[models.length] = nextModel;
+        models = models2;
     }
-    public String[] getAllModelNames(){
-        final int len = models.size();
-        String[] modelNames = new String[len];
-        for(int i=0; i<len; i++){
-            modelNames[i] = models.get(i).getModelName();
-        }
-        return modelNames;
+
+    @Override
+    public void deleteModel(String name) {
+        models = Arrays.copyOf(models, models.length-1);
     }
-    public int[] getAllPrices(){
-        final int len = models.size();
-        int[] prices = new int[len];
-        for(int i=0; i<len; i++){
-            prices[i] = models.get(i).getPrice();
-        }
-        return prices;
-    }
-    public int getPriceByModelName(String modelName){
-        final int len = models.size();
-        for(int i=0; i<len; i++){
-            if(models.get(i).getModelName().equals(modelName)){
-                return models.get(i).getPrice();
-            }
-        }
-        return -1;
-    }
-    public int setPriceByModelName(String modelName, int price){
-        final int len = models.size();
-        for(int i=0; i<len; i++){
-            if(models.get(i).getModelName().equals(modelName)){
-                models.get(i).setPrice(price);
-                return 0;
-            }
-        }
-        return -1;
+
+    @Override
+    public int getModelCount() {
+        return models.length;
     }
 }

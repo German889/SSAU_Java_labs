@@ -2,91 +2,208 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 package com.giver.lab1;
 
+import com.giver.lab1.exceptions.ModelPriceOutOfBoundsException;
+import com.giver.lab1.exceptions.NoSuchModelNameException;
+
 import java.time.LocalDateTime;
 
-public class Motorcycle {
-    public Motorcycle(){}
-    public Motorcycle(String brand){
+public class Motorcycle implements Vehicle {
+    { // блок инициализации для записи даты первого изменения
+        lastModified = System.currentTimeMillis();
+    }
+
+    public Motorcycle() {
+    }
+
+    public Motorcycle(String brand, String modelName, double price) {
+        lastModified = System.currentTimeMillis();
         this.brand = brand;
-        head = new Model();
+        this.head = new MotoModel(modelName, price);
+        this.head.setNext(head);
+        this.head.setPrev(head);
+        size = 1;
     }
-    private LocalDateTime lastModifiedBrandDate;
-    {
-        lastModifiedBrandDate = LocalDateTime.now();
-    }
-    private class Model {
-        private LocalDateTime lastModifiedModelDate;
-        {
-            lastModifiedModelDate = LocalDateTime.now();
-        }
-        String modelName = null;
-        double price = Double.NaN;
-        Model prev = null;
-        Model next = null;
 
-        public void setModelName(String modelName){
-            this.modelName = modelName;
-        }
-        public String getModelName(){
-            return this.modelName;
-        }
-        public Model getNext(){
-            return this.next;
-        }
-        public Model getPrev(){
-            return this.prev;
-        }
-        public void setNext(Model model){
-            this.next = model;
-        }
-        public void setPrev(Model model){
-            this.prev = model;
-        }
-
-    }
-    private int size = 0;
-    private Model head = null;
     private String brand;
-    public String getBrand(){
+
+    @Override
+    public String getBrand() {
         return this.brand;
     }
-    public void setBrand(String brandName){
-        this.brand = brandName;
+
+    @Override
+    public void setBrand(String name) {
+        lastModified = System.currentTimeMillis();
+        this.brand = name;
     }
 
-    public void setHead(Model head){
-        this.head = head;
+    @Override
+    public void changeModelName(String oldName, String newName) throws NoSuchModelNameException {
+        boolean isFound = false;
+        lastModified = System.currentTimeMillis();
+        MotoModel current = head;
+        do {
+            if (current.getModelName().equals(oldName)) {
+                current.setModelName(newName);
+                isFound = true;
+                break;
+            }
+            current = current.getNext();
+        } while (current != head);
+        if (!isFound) throw new NoSuchModelNameException("Невозможно изменить модель с таким именем");
     }
-    public Model getHead(){
-        return this.head;
-    }
-    public void add(Model model){
-        if(head.getNext() == null){
-            head.setNext(model);
-            head.setPrev(model);
-        }
-        Model current = head;
-        while (head.getPrev() != current){
-            current = head.getNext();
-        }
-        current.setNext(model);
-        head.setPrev(model);
-    }
-    public String[] getAllModelNames(){
-        if(head == null) return new String[0];
-        int modelsCount = 0;
-        Model current = head;
-        while(current != this.head.getPrev()){
-            modelsCount++;
+
+    @Override
+    public String[] getAllModelNames() {
+        String[] allModels = new String[size];
+        MotoModel current = head;
+        for (int i = 0; i < size; i++) {
+            allModels[i] = current.getModelName();
             current = current.getNext();
         }
-        String[] allModelNames = new String[modelsCount];
-        current = head;
-        int i = 0;
-        while(current != this.head.getPrev()){
-            allModelNames[i] = current.getModelName();
-        }
-        return allModelNames;
+        return allModels;
     }
 
+    @Override
+    public double getModelPriceByName(String name) throws NoSuchModelNameException {
+        MotoModel current = head;
+        do {
+            if (current.getModelName().equals(name)) return current.getPrice();
+            current = current.getNext();
+        } while (current != head);
+        throw new NoSuchModelNameException("Модель с таким именем не найдена");
+    }
+
+    @Override
+    public void setModelPriceByName(String name, double price) throws NoSuchModelNameException, ModelPriceOutOfBoundsException {
+        if (price > Double.MAX_VALUE - 1000) throw new ModelPriceOutOfBoundsException("Цена слишком высока");
+        lastModified = System.currentTimeMillis();
+        MotoModel current = head;
+        boolean isFound = false;
+        do {
+            if (current.getModelName().equals(name)) {
+                current.setPrice(price);
+                isFound = true;
+                break;
+            }
+            current = current.getNext();
+        } while (current != head);
+        if (!isFound) throw new NoSuchModelNameException("Модель с таким именем не найдена");
+    }
+
+    @Override
+    public double[] getAllPrices() {
+        double[] allPrices = new double[size];
+        MotoModel current = head;
+        for (int i = 0; i < size; i++) {
+            allPrices[i] = current.getPrice();
+            current = current.getNext();
+        }
+        return allPrices;
+    }
+
+    @Override
+    public void addModel(String name, double price) throws ModelPriceOutOfBoundsException {
+        if (price > Double.MAX_VALUE - 1000) throw new ModelPriceOutOfBoundsException("Цена слишком высока");
+        size++;
+        lastModified = System.currentTimeMillis();
+        MotoModel lastNew = new MotoModel(name, price);
+        if (head == null) {
+            head = lastNew;
+            head.setNext(head);
+            head.setPrev(head);
+        } else {
+            MotoModel lastCurrent = head.getPrev();
+            lastCurrent.setNext(lastNew);
+            lastNew.setPrev(lastCurrent);
+            lastNew.setNext(head);
+            head.setPrev(lastNew);
+        }
+    }
+
+    @Override
+    public void deleteModel(String name) throws NoSuchModelNameException {
+        lastModified = System.currentTimeMillis();
+        if (head == null) throw new NoSuchModelNameException("Список моделей пуст");
+        MotoModel current = head;
+        boolean isFound = false;
+        do {
+            if (current.getModelName().equals(name)) {
+                size--;
+                MotoModel prev = current.getPrev();
+                MotoModel next = current.getNext();
+                if (prev == current && next == current) {
+                    head = null;
+                } else {
+                    prev.setNext(next);
+                    next.setPrev(prev);
+                    if (current == head) {
+                        head = next;
+                    }
+                }
+                isFound = true;
+                break;
+            }
+            current = current.getNext();
+        } while (current != head);
+        if (!isFound) throw new NoSuchModelNameException("Модель с таким именем не найдена");
+    }
+
+    @Override
+    public int getModelCount() {
+        return size;
+    }
+
+    private class MotoModel extends Model {
+        protected MotoModel(String modelName, double price) {
+            this.modelName = modelName;
+            this.price = price;
+        }
+
+        String modelName = null;
+        double price = Double.NaN;
+        MotoModel prev = null;
+        MotoModel next = null;
+
+        public MotoModel getPrev() {
+            return this.prev;
+        }
+
+        public void setPrev(MotoModel prev) {
+            this.prev = prev;
+        }
+
+        public MotoModel getNext() {
+            return this.next;
+        }
+
+        public void setNext(MotoModel next) {
+            this.next = next;
+        }
+
+        @Override
+        public void setModelName(String name) {
+            this.modelName = name;
+        }
+
+        @Override
+        public String getModelName() {
+            return this.modelName;
+        }
+
+        @Override
+        public void setPrice(double price) {
+            this.price = price;
+        }
+
+        @Override
+        public double getPrice() {
+            return this.price;
+        }
+    }
+
+    private int size = 0;
+    private MotoModel head;
+    private long lastModified;
+// далее код по заданию
 }
