@@ -2,13 +2,17 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 package com.giver.lab1;
 
+import com.giver.lab1.exceptions.DuplicateModelNameException;
 import com.giver.lab1.exceptions.ModelPriceOutOfBoundsException;
 import com.giver.lab1.exceptions.NoSuchModelNameException;
 
-import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 
 public class Motorcycle implements Vehicle {
-    { // блок инициализации для записи даты первого изменения
+    {
         lastModified = System.currentTimeMillis();
     }
 
@@ -22,6 +26,22 @@ public class Motorcycle implements Vehicle {
         this.head.setNext(head);
         this.head.setPrev(head);
         size = 1;
+    }
+    public Motorcycle(String brand, int modelCount){
+        lastModified = System.currentTimeMillis();
+        this.brand = brand;
+        head = modelGenerator();
+        for(int i=0; i<modelCount; i++){
+            MotoModel m = modelGenerator();
+            try{
+                addModel(m.getModelName(), m.getPrice());
+                if(i==modelCount){
+                    head.setPrev(m);
+                }
+            }catch(DuplicateModelNameException e){
+                e.printStackTrace();
+            }
+        }
     }
 
     private String brand;
@@ -37,19 +57,24 @@ public class Motorcycle implements Vehicle {
         this.brand = name;
     }
 
-    @Override
-    public void changeModelName(String oldName, String newName) throws NoSuchModelNameException {
+    @Override //ауауау
+    public void changeModelName(String oldName, String newName) throws NoSuchModelNameException, DuplicateModelNameException {
+        if(oldName.equals(newName)) throw new DuplicateModelNameException("В чём смысл?");
         boolean isFound = false;
         lastModified = System.currentTimeMillis();
         MotoModel current = head;
-        do {
+        MotoModel found = null;
+        do {// сделать за 1 проход
             if (current.getModelName().equals(oldName)) {
-                current.setModelName(newName);
+                found = current;
                 isFound = true;
-                break;
             }
+            if(current.getModelName().equals(newName)) throw new DuplicateModelNameException("Не выйдет!");
             current = current.getNext();
         } while (current != head);
+        if(isFound){
+            found.setModelName(newName);
+        }
         if (!isFound) throw new NoSuchModelNameException("Невозможно изменить модель с таким именем");
     }
 
@@ -75,13 +100,14 @@ public class Motorcycle implements Vehicle {
     }
 
     @Override
-    public void setModelPriceByName(String name, double price) throws NoSuchModelNameException, ModelPriceOutOfBoundsException {
-        if (price > Double.MAX_VALUE - 1000) throw new ModelPriceOutOfBoundsException("Цена слишком высока");
+    public void setModelPriceByName(String name, double price) throws NoSuchModelNameException {
+        if (price < 0) throw new ModelPriceOutOfBoundsException("У вас нет такого промокода");
         lastModified = System.currentTimeMillis();
         MotoModel current = head;
         boolean isFound = false;
         do {
             if (current.getModelName().equals(name)) {
+                if(current.getPrice()==price) throw new ModelPriceOutOfBoundsException("такая цена уже была");
                 current.setPrice(price);
                 isFound = true;
                 break;
@@ -103,8 +129,13 @@ public class Motorcycle implements Vehicle {
     }
 
     @Override
-    public void addModel(String name, double price) throws ModelPriceOutOfBoundsException {
-        if (price > Double.MAX_VALUE - 1000) throw new ModelPriceOutOfBoundsException("Цена слишком высока");
+    public void addModel(String name, double price) throws DuplicateModelNameException{
+        MotoModel current = head;
+        if (price < 0) throw new ModelPriceOutOfBoundsException("У вас нет такого промокода");
+        for(int i=0; i<size; i++){
+            if(current.getModelName().equals(name)) throw new DuplicateModelNameException("Уже есть такая модель");
+            current = current.getNext();
+        }
         size++;
         lastModified = System.currentTimeMillis();
         MotoModel lastNew = new MotoModel(name, price);
@@ -112,6 +143,9 @@ public class Motorcycle implements Vehicle {
             head = lastNew;
             head.setNext(head);
             head.setPrev(head);
+        } else if (head.getPrev()==null) {
+            head.setPrev(lastNew);
+            head.setNext(lastNew);
         } else {
             MotoModel lastCurrent = head.getPrev();
             lastCurrent.setNext(lastNew);
@@ -205,5 +239,23 @@ public class Motorcycle implements Vehicle {
     private int size = 0;
     private MotoModel head;
     private long lastModified;
-// далее код по заданию
+
+    private Set<String> usedModelNames = new HashSet<>();
+
+    public MotoModel modelGenerator() {
+        Random random = new Random();
+        String modelName;
+        do {
+            modelName = generateUniqueModelName(random);
+        } while (usedModelNames.contains(modelName));
+
+        usedModelNames.add(modelName);
+
+        double price = random.nextDouble() * 10453;
+        return new MotoModel(modelName, price);
+    }
+
+    private String generateUniqueModelName(Random random) {
+        return UUID.randomUUID().toString().substring(0, 8);
+    }
 }
