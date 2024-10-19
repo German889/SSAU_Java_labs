@@ -18,7 +18,7 @@ public class Main {
         try {
 //            car.changeModelName("r8","r9");
 //            bike.changeModelName("gh", "hn");
-//            car.changeModelName(carNameForDublication,allCarNames[4]);
+            car.changeModelName(carNameForDublication,allCarNames[4]);
 //            bike.changeModelName(bikeNameForDublication, allBikeNames[6]);
 //            car.addModel(carNameForDublication,-100);
 //            bike.addModel("tr", -100);
@@ -31,9 +31,9 @@ public class Main {
 //            car.setModelPriceByName("kjsdbkds",7675);
 //            bike.setModelPriceByName("ewknfb",9766);
         }
-//        catch (DuplicateModelNameException e) {e.printStackTrace();}
-//        catch(ModelPriceOutOfBoundsException e){e.printStackTrace();}
-//        catch (NoSuchModelNameException e) {e.printStackTrace();}
+        catch (DuplicateModelNameException e) {e.printStackTrace();}
+        catch(ModelPriceOutOfBoundsException e){e.printStackTrace();}
+        catch (NoSuchModelNameException e) {e.printStackTrace();}
 
     }
 }

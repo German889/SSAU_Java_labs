@@ -6,12 +6,14 @@ import com.giver.lab1.exceptions.DuplicateModelNameException;
 import com.giver.lab1.exceptions.ModelPriceOutOfBoundsException;
 import com.giver.lab1.exceptions.NoSuchModelNameException;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-public class Motorcycle implements Vehicle {
+public class Motorcycle implements Vehicle, Serializable {
+    private static final long serialVersionUID = 1L;
     {
         lastModified = System.currentTimeMillis();
     }
@@ -132,26 +134,31 @@ public class Motorcycle implements Vehicle {
     public void addModel(String name, double price) throws DuplicateModelNameException{
         MotoModel current = head;
         if (price < 0) throw new ModelPriceOutOfBoundsException("У вас нет такого промокода");
-        for(int i=0; i<size; i++){
-            if(current.getModelName().equals(name)) throw new DuplicateModelNameException("Уже есть такая модель");
-            current = current.getNext();
-        }
-        size++;
-        lastModified = System.currentTimeMillis();
-        MotoModel lastNew = new MotoModel(name, price);
-        if (head == null) {
-            head = lastNew;
-            head.setNext(head);
-            head.setPrev(head);
-        } else if (head.getPrev()==null) {
-            head.setPrev(lastNew);
-            head.setNext(lastNew);
-        } else {
-            MotoModel lastCurrent = head.getPrev();
-            lastCurrent.setNext(lastNew);
-            lastNew.setPrev(lastCurrent);
-            lastNew.setNext(head);
-            head.setPrev(lastNew);
+        if(head!=null){
+            for (int i = 0; i < size; i++) {
+                if (current.getModelName().equals(name)) throw new DuplicateModelNameException("Уже есть такая модель");
+                current = current.getNext();
+            }
+            size++;
+            lastModified = System.currentTimeMillis();
+            MotoModel lastNew = new MotoModel(name, price);
+            if (head == null) {
+                head = lastNew;
+                head.setNext(head);
+                head.setPrev(head);
+            } else if (head.getPrev() == null) {
+                head.setPrev(lastNew);
+                head.setNext(lastNew);
+            } else {
+                MotoModel lastCurrent = head.getPrev();
+                lastCurrent.setNext(lastNew);
+                lastNew.setPrev(lastCurrent);
+                lastNew.setNext(head);
+                head.setPrev(lastNew);
+            }
+        }else{
+            size++;
+            this.head = new MotoModel(name, price);
         }
     }
 
@@ -188,7 +195,7 @@ public class Motorcycle implements Vehicle {
         return size;
     }
 
-    private class MotoModel extends Model {
+    private class MotoModel extends Model implements Serializable{
         protected MotoModel(String modelName, double price) {
             this.modelName = modelName;
             this.price = price;
@@ -238,7 +245,7 @@ public class Motorcycle implements Vehicle {
 
     private int size = 0;
     private MotoModel head;
-    private long lastModified;
+    private transient long lastModified;
 
     private Set<String> usedModelNames = new HashSet<>();
 

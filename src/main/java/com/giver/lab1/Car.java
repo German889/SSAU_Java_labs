@@ -6,10 +6,14 @@ import com.giver.lab1.exceptions.DuplicateModelNameException;
 import com.giver.lab1.exceptions.ModelPriceOutOfBoundsException;
 import com.giver.lab1.exceptions.NoSuchModelNameException;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Car implements Vehicle {
-    public Car(){}
+public class Car implements Vehicle, Serializable {
+    private static final long serialVersionUID = 1L;
+    public Car(){
+        models = new CarModel[0];
+    }
     public Car(String brand, int modelCount){
         this.brand = brand;
         models = new CarModel[modelCount]; //ауауауауауауауауауауаауауауауауауауауауа
@@ -20,7 +24,7 @@ public class Car implements Vehicle {
     private CarModel[] models;
     private String brand;
 
-    private class CarModel extends Model{
+    private class CarModel extends Model implements Serializable{
         public CarModel(){}
         public CarModel(String modelName, double price){
             this.modelName = modelName; this.price = price;
@@ -45,7 +49,7 @@ public class Car implements Vehicle {
     @Override //ауауауауаауауауауауауауауа
     public void changeModelName(String oldName, String newName) throws NoSuchModelNameException, DuplicateModelNameException {
         if(oldName.equals(newName)) throw new DuplicateModelNameException("В чём смысл?");
-        boolean notFound = true;
+//        boolean notFound = true;
         int foundedId = -1;
         for (int i=0; i<models.length; i++) { //можно сделать в 1 проход
             if(models[i].getModelName().equals(newName)) throw new DuplicateModelNameException("Не выйдет!");
@@ -57,9 +61,7 @@ public class Car implements Vehicle {
         }
         if(foundedId > -1){
             models[foundedId].setModelName(newName);
-            notFound = false;
-        }
-        if(notFound) throw new NoSuchModelNameException("Невозможно изменить название модели");
+        } else throw new NoSuchModelNameException("Невозможно изменить название модели");
     }
 
     @Override
@@ -104,12 +106,18 @@ public class Car implements Vehicle {
     @Override
     public void addModel(String name, double price) throws DuplicateModelNameException {
         if(price < 0) throw new ModelPriceOutOfBoundsException("У вас нет такого купона");
-        for(CarModel m:models){
-            if(m.getModelName().equals(name)) throw new DuplicateModelNameException("Куда? Есть уже");
+        if(models.length>0){
+            for (CarModel m : models) {
+                if (m.getModelName().equals(name)) throw new DuplicateModelNameException("Куда? Есть уже");
+            }
+            models = Arrays.copyOf(models, models.length + 1);
+            CarModel nextModel = new CarModel(name, price);
+            models[models.length-1] = nextModel;
+        }else{
+            models = new CarModel[1];
+            CarModel firstModel = new CarModel(name, price);
+            models[0] = firstModel;
         }
-        models = Arrays.copyOf(models, models.length+1);
-        CarModel nextModel = new CarModel(name, price);
-        models[models.length] = nextModel;
     }
 
     @Override
