@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<student lastname="Ivanov">
+        
+    <subject mark="2" title="Math"/>
+        
+    <subject mark="2" title="Physics"/>
+        
+    <subject mark="2" title="Russian language"/>
+        
+    <subject mark="4" title="Chemistry"/>
+        
+    <subject mark="4" title="Programming"/>
+                
+    
+    
+    <subject mark="4" title="Geography"/>
+                        
+    
+    
+    
+    
+    <average>900</average>
+                    
+
+
+
+
+</student>

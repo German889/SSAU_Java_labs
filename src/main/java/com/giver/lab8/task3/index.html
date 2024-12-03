@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Input</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+<h1>Simple Calculator</h1>
+<p>Enter two numbers and select an operation:</p>
+
+<form id="calcForm">
+    <label for="num1">First Number:</label>
+    <!-- Используем input с type="text" для поддержки дробных чисел -->
+    <input type="text" id="num1" required placeholder="Enter first number">
+
+    <label for="num2">Second Number:</label>
+    <!-- Используем input с type="text" для поддержки дробных чисел -->
+    <input type="text" id="num2" required placeholder="Enter second number">
+
+    <p>Select an operation:</p>
+    <div>
+        <input type="radio" id="add" name="operation" value="add" checked>
+        <label for="add">Add</label>
+
+        <input type="radio" id="subtract" name="operation" value="subtract">
+        <label for="subtract">Subtract</label>
+
+        <input type="radio" id="multiply" name="operation" value="multiply">
+        <label for="multiply">Multiply</label>
+
+        <input type="radio" id="divide" name="operation" value="divide">
+        <label for="divide">Divide</label>
+    </div>
+
+    <button type="submit">Calculate</button>
+</form>
+</body>
+</html>
